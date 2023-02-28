@@ -22,16 +22,16 @@ io.on("connection", (socket) => {
 
   // When the client disconnect
   socket.on("disconnect", () => {
-    let index;
+    let index= [];
     if (hasName) {
       clients.forEach((client) => {
         if (client.usr.toLowerCase() === socket.username.toLowerCase()) {
-          index = clients.indexOf(client);
+          index.push(clients.indexOf(client));
         }
       });
       console.log("Usuario desconectado - Usuario: " + socket.username);
       io.emit("send message", { message: socket.username,user: "Usuario desconectado" });
-      clients.splice(index, 1);
+      clients.splice(index[1], 1);
     }
   });
 
