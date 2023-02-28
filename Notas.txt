@@ -1,5 +1,0 @@
-Chat 1-1
-    - Corregir envío 1-1, ya solo queda dirigir al destinatario
-
-Enviar archivos
-    -...
