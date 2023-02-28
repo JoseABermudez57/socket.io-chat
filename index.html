@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SocketsChat</title>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+
+  <body>
+    <!-- 1-* -->
+    <div class="message-box">
+      <div class="divs-message">
+        <div id="message_list"></div>
+      </div>
+      <div id="image-container"></div>
+      <br />
+
+      <div class="message-inputs">
+        <form id="message_area" class="message_area" action="">
+          <input id="text_area" autocomplete="off" />
+          <button>Send</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 1-1 -->
+    <div class="message-1-1">
+      <div class="list-person">
+        <ul id="users_list"></ul>
+      </div>
+      <div class="message-person">
+        <div class="view-message">
+          <br />
+          <div id="private_message_list"></div>
+        </div>
+        <div class="sends-input">
+          <input
+            id="private-message"
+            type="text"
+            placeholder="Selecciona el usuario para enviar el susurro..."
+          />
+          <button id="send-private-message">Enviar</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const socket = io();
+
+      // Con emit envía el mensaje al socket
+      const username = window.prompt("Usuario:");
+      socket.emit("new user", username);
+
+      // Obtiene el formulario
+      const messageForm = document.getElementById("message_area");
+      // Obtiene lo que tenga el input del texto
+      const textInput = document.getElementById("text_area");
+      const privateTextInput = document.getElementById("private-message");
+      const privateTextButton = document.getElementById("send-private-message");
+      const usersList = document.getElementById("users_list");
+
+      let lista = document.querySelectorAll("#users_list");
+
+      // Controlador de eventos para la lista de usuarios
+      for (let i = 0; i < lista.length; i++) {
+        lista[i].addEventListener("click", function (e) {
+          let textFromList = e.target.textContent;
+          privateTextInput.focus();
+          privateTextInput.value = `@${textFromList} `;
+        });
+      }
+
+      privateTextButton.addEventListener("click", function(){
+        let message = "";
+        textFromInput = privateTextInput.value;
+        privateTextInput.value = " ";
+        userReceiver = textFromInput.split('@')[1].split(' ')[0];
+        message = textFromInput.split('@')[1].split(" ").slice(1).join(" ");
+        console.log({userReceiver, message})
+        // Se debe enviar el nombre y el mensaje
+        socket.emit("new private message", {userReceiver, message});
+      });
+
+      messageForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (textInput.value) {
+          socket.emit("new message", textInput.value);
+          textInput.value = "";
+        }
+      });
+
+      socket.on("user list", (users) => {
+        usersList.innerHTML = " ";
+        for (let i = 0; i < users.length; i++) {
+          if (users[i] !== username) {
+            const userItem = document.createElement("li");
+            userItem.classList.add("user_item");
+            userItem.textContent = users[i];
+            usersList.appendChild(userItem);
+          }
+        }
+      });
+
+      // Recibe los mensajes de los clientes
+      socket.on("send message", (data) => {
+        const messageList = document.getElementById("message_list");
+        messageList.innerHTML += `<div>${data.user} : ${data.message}</div>`;
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      privateTextButton.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (privateTextInput.value) {
+          socket.emit("send private message", privateTextInput.value);
+          privateTextInput.value = " ";
+        }
+      });
+
+      socket.on("private message", (data) => {
+        const messageList = document.getElementById("private_message_list");
+        messageList.innerHTML += `<div>[private] ${data.user}: ${data.message}</div>`;
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+    </script>
+
+    <style>
+      .view-message {
+        grid-row-start: 1;
+        grid-row-end: 5;
+        grid-column-start: 2;
+        grid-column-end: 6;
+        overflow-y: scroll;
+      }
+
+      ::-webkit-scrollbar {
+        display: none;
+      }
+
+      .sends-input {
+        grid-row-start: 6;
+        grid-row-end: 7;
+        grid-column-start: 1;
+        grid-column-end: -1;
+        width: 100%;
+        height: 100%;
+        display: flex;
+      }
+
+      .sends-input input {
+        margin-left: 10%;
+        width: 70%;
+        height: 40%;
+      }
+
+      .sends-input button {
+        margin-right: 10%;
+        width: 10%;
+        height: 50%;
+        border: none;
+      }
+
+      .list-person {
+        width: 25%;
+        height: 100%;
+        background-color: #145079;
+        border: 2px solid black;
+        /* border-right: 2px black solid; */
+        overflow-y: scroll;
+      }
+
+      .message-person {
+        width: 75%;
+        height: 100%;
+        display: grid;
+        border-top: 2px solid black;
+        border-bottom: 2px solid black;
+        border-right: 2px solid black;
+        background-color: #8dbbd8;
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: repeat(6, 1fr);
+      }
+
+      .message-1-1 {
+        display: flex;
+        background-color: white;
+        grid-column-start: 2;
+        height: 100%;
+        width: 100%;
+        grid-column-end: 6;
+        grid-row-start: 6;
+        grid-row-end: 12;
+      }
+
+      .divs-message {
+        grid-column-start: 2;
+        grid-column-end: 5;
+        grid-row-start: 1;
+        grid-row-end: 4;
+        overflow-y: scroll;
+      }
+
+      * {
+        margin: 0;
+      }
+
+      body {
+        height: 100vh;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: repeat(12, 1fr);
+        background-color: #06283d;
+      }
+
+      .message-box {
+        border-radius: 20px;
+        grid-column-start: 3;
+        grid-column-end: 5;
+        grid-row-start: 2;
+        grid-row-end: 5;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: rgb(71, 199, 78);
+        border: solid 3px black;
+      }
+
+      .message-inputs {
+        grid-column-start: 2;
+        grid-column-end: 5;
+        grid-row-start: 4;
+      }
+
+      .message-inputs button {
+        grid-column-start: 3;
+      }
+    </style>
+  </body>
+</html>
