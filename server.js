@@ -22,7 +22,7 @@ io.on("connection", (socket) => {
 
   // When the client disconnect
   socket.on("disconnect", () => {
-    let index= [];
+    let index = [];
     if (hasName) {
       clients.forEach((client) => {
         if (client.usr.toLowerCase() === socket.username.toLowerCase()) {
@@ -30,14 +30,21 @@ io.on("connection", (socket) => {
         }
       });
       console.log("Usuario desconectado - Usuario: " + socket.username);
-      io.emit("send message", { message: socket.username,user: "Usuario desconectado" });
+      io.emit("send message", {
+        message: socket.username,
+        user: "Usuario desconectado",
+      });
       clients.splice(index[1], 1);
     }
   });
 
   // When the client send a message
-  socket.on("new message", (msg) => {
-    io.emit("send message", { message: msg, user: socket.username });
+  socket.on("new message", (data) => {
+    io.emit("send message", { message: data, user: socket.username });
+  });
+
+  socket.on("new image", (data) => {
+    io.emit("send new image", { image: data, user: socket.username });
   });
 
   // Chat 1-1
@@ -45,12 +52,15 @@ io.on("connection", (socket) => {
   // Dirigir correctamente al destinatario
   socket.on("new private message", (data) => {
     let clientRecipient;
-    clients.forEach((client) =>{
-      clientRecipient = (client.usr == data.userReceiver) ? client : false;
+    clients.forEach((client) => {
+      clientRecipient = client.usr == data.userReceiver ? client : false;
     });
-    if(clientRecipient){
-      io.to(clientRecipient.socket.id).emit("private message", {user: clientRecipient.usr, message: data.message});
-    } else{
+    if (clientRecipient) {
+      io.to(clientRecipient.socket.id).emit("private message", {
+        user: clientRecipient.usr,
+        message: data.message,
+      });
+    } else {
       console.log("Cliente no encontrado");
     }
   });
@@ -77,8 +87,9 @@ io.on("connection", (socket) => {
 
   // Envía constantemente la lista
   setInterval(() => {
-    connectedUsers = clients.map((user) => {return user.usr});
+    connectedUsers = clients.map((user) => {
+      return user.usr;
+    });
     io.emit("user list", connectedUsers);
   }, 2500);
-
 });

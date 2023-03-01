@@ -6,6 +6,12 @@
   </head>
 
   <body>
+    <input
+      id="file-input"
+      type="file"
+      accept=".png, .jpg, .jpeg"
+      style="opacity: 0"
+    />
     <!-- 1-* -->
     <div class="message-box">
       <div class="divs-message">
@@ -17,7 +23,8 @@
       <div class="message-inputs">
         <form id="message_area" class="message_area" action="">
           <input id="text_area" autocomplete="off" />
-          <button>Send</button>
+          <button id="send-button">Send</button>
+          <label id="send-file-button" for="file-input">File</label>
         </form>
       </div>
     </div>
@@ -57,8 +64,9 @@
       const privateTextInput = document.getElementById("private-message");
       const privateTextButton = document.getElementById("send-private-message");
       const usersList = document.getElementById("users_list");
-
-      let lista = document.querySelectorAll("#users_list");
+      const imageInput = document.getElementById("file-input");
+      const messageList = document.getElementById("message_list");
+      const lista = document.querySelectorAll("#users_list");
 
       // Controlador de eventos para la lista de usuarios
       for (let i = 0; i < lista.length; i++) {
@@ -69,22 +77,32 @@
         });
       }
 
-      privateTextButton.addEventListener("click", function(){
+      privateTextButton.addEventListener("click", function () {
         let message = "";
         textFromInput = privateTextInput.value;
         privateTextInput.value = " ";
-        userReceiver = textFromInput.split('@')[1].split(' ')[0];
-        message = textFromInput.split('@')[1].split(" ").slice(1).join(" ");
-        console.log({userReceiver, message})
-        // Se debe enviar el nombre y el mensaje
-        socket.emit("new private message", {userReceiver, message});
+        userReceiver = textFromInput.split("@")[1].split(" ")[0];
+        message = textFromInput.split("@")[1].split(" ").slice(1).join(" ");
+        
+        socket.emit("new private message", { userReceiver, message });
       });
 
       messageForm.addEventListener("submit", function (e) {
+        const file = imageInput.files[0];
+
         e.preventDefault();
         if (textInput.value) {
           socket.emit("new message", textInput.value);
           textInput.value = "";
+        }
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const imageData = event.target.result;
+            socket.emit("new image", imageData);
+          };
+          reader.readAsDataURL(file);
+          imageInput.value = null;
         }
       });
 
@@ -102,9 +120,12 @@
 
       // Recibe los mensajes de los clientes
       socket.on("send message", (data) => {
-        const messageList = document.getElementById("message_list");
         messageList.innerHTML += `<div>${data.user} : ${data.message}</div>`;
         window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      socket.on("send new image", (data) =>{
+        messageList.innerHTML += `<div>${data.user} :<br><img src=${data.image} style="width: 100px;"></img></div>`
       });
 
       privateTextButton.addEventListener("submit", function (e) {
@@ -156,6 +177,18 @@
         width: 10%;
         height: 50%;
         border: none;
+      }
+
+      #send-private-message:hover {
+        cursor: pointer;
+      }
+
+      #send-button:hover {
+        cursor: pointer;
+      }
+
+      #send-file-button:hover {
+        cursor: pointer;
       }
 
       .list-person {
