@@ -5,7 +5,6 @@ const PORT = process.env.PORT || 3000;
 
 let clients = [];
 
-// Lanza el html index para ser usado como interfaz grafica
 application.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });
@@ -22,19 +21,19 @@ io.on("connection", (socket) => {
 
   // When the client disconnect
   socket.on("disconnect", () => {
-    let index = [];
+    let index;
+    clients.forEach((client) => {
+      if (client.socket == socket) {
+        index = clients.indexOf(client);
+        clients.splice(index, 1);
+      }
+    });
     if (hasName) {
-      clients.forEach((client) => {
-        if (client.usr.toLowerCase() === socket.username.toLowerCase()) {
-          index.push(clients.indexOf(client));
-        }
-      });
       console.log("Usuario desconectado - Usuario: " + socket.username);
       io.emit("send message", {
         message: socket.username,
         user: "Usuario desconectado",
       });
-      clients.splice(index[1], 1);
     }
   });
 
@@ -48,8 +47,6 @@ io.on("connection", (socket) => {
   });
 
   // Chat 1-1
-
-  // Dirigir correctamente al destinatario
   socket.on("new private message", (data) => {
     let clientRecipient;
     clients.forEach((client) => {
@@ -80,6 +77,7 @@ io.on("connection", (socket) => {
         hasName = true;
       } else {
         console.log("Ya existe este nombre de usuario");
+        io.to(socket.id).emit("disconnect user", { refresh: true });
         socket.disconnect();
       }
     }

@@ -6,12 +6,7 @@
   </head>
 
   <body>
-    <input
-      id="file-input"
-      type="file"
-      accept=".png, .jpg, .jpeg"
-      style="opacity: 0"
-    />
+    <input id="file-input" type="file" accept=".png, .jpg, .jpeg" style="opacity: 0"/>
     <!-- 1-* -->
     <div class="message-box">
       <div class="divs-message">
@@ -24,7 +19,7 @@
         <form id="message_area" class="message_area" action="">
           <input id="text_area" autocomplete="off" />
           <button id="send-button">Send</button>
-          <label id="send-file-button" for="file-input">File</label>
+          <label id="send-file-button" for="file-input"> File </label>
         </form>
       </div>
     </div>
@@ -54,7 +49,8 @@
       const socket = io();
 
       // Con emit envía el mensaje al socket
-      const username = window.prompt("Usuario:");
+      let username;
+      username = window.prompt("Usuario:");
       socket.emit("new user", username);
 
       // Obtiene el formulario
@@ -125,7 +121,7 @@
       });
 
       socket.on("send new image", (data) =>{
-        messageList.innerHTML += `<div>${data.user} :<br><img src=${data.image} style="width: 100px;"></img></div>`
+        messageList.innerHTML += `<div>${data.user} :<br><img src=${data.image} style="width: 150px;"></img></div>`
       });
 
       privateTextButton.addEventListener("submit", function (e) {
@@ -141,6 +137,14 @@
         messageList.innerHTML += `<div>[private] ${data.user}: ${data.message}</div>`;
         window.scrollTo(0, document.body.scrollHeight);
       });
+
+      socket.on("disconnect user", (status) =>{
+        console.log();
+        if(status.refresh == true){
+          location.reload();
+        }
+      });
+
     </script>
 
     <style>
@@ -187,16 +191,24 @@
         cursor: pointer;
       }
 
+      #send-file-button {
+        background-color: white;
+        border: 1px solid black;
+      }
+
       #send-file-button:hover {
         cursor: pointer;
       }
 
       .list-person {
+        grid-column-start: 2;
+        grid-column-end: 3;
+        grid-row-start: 2;
+        grid-row-end: 5;
         width: 25%;
         height: 100%;
         background-color: #145079;
         border: 2px solid black;
-        /* border-right: 2px black solid; */
         overflow-y: scroll;
       }
 
